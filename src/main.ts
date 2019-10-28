@@ -1,14 +1,11 @@
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
-import * as github from '@actions/github';
 
 import {Cargo, Cross} from '@actions-rs/core';
 import * as input from './input';
 import {CheckRunner} from './check';
 
 export async function run(actionInput: input.Input): Promise<void> {
-    const startedAt = new Date().toISOString();
-
     let program;
     if (actionInput.useCross) {
         program = await Cross.getOrInstall();
@@ -23,23 +20,23 @@ export async function run(actionInput: input.Input): Promise<void> {
     await exec.exec('rustc', ['-V'], {
         silent: true,
         listeners: {
-            stdout: (buffer: Buffer) => rustcVersion = buffer.toString().trim(),
+            stdout: (buffer: Buffer) => rustcVersion += buffer.toString().trim(),
         }
     })
     await program.call(['-V'], {
         silent: true,
         listeners: {
-            stdout: (buffer: Buffer) => cargoVersion = buffer.toString().trim(),
+            stdout: (buffer: Buffer) => cargoVersion += buffer.toString().trim(),
         }
     });
     await program.call(['clippy', '-V'], {
         silent: true,
         listeners: {
-            stdout: (buffer: Buffer) => clippyVersion = buffer.toString().trim(),
+            stdout: (buffer: Buffer) => clippyVersion += buffer.toString().trim(),
         }
     });
 
-    // `--message-format=json` should just right after the `cargo clippy`
+    // `--message-format=json` should be just right after the `cargo clippy`
     // because usually people are adding the `-- -D warnings` at the end
     // of arguments and it will mess up the output.
     let args: string[] = ['clippy', '--message-format=json'];
@@ -57,7 +54,7 @@ export async function run(actionInput: input.Input): Promise<void> {
             failOnStdErr: false,
             listeners: {
                 stdline: (line: string) => {
-                    runner.tryPush(line);
+                    runner.renderLine(line);
                 }
             }
         });
@@ -65,19 +62,19 @@ export async function run(actionInput: input.Input): Promise<void> {
         core.endGroup();
     }
 
-    await runner.executeCheck({
-        token: actionInput.token,
-        name: 'clippy',
-        owner: github.context.repo.owner,
-        repo: github.context.repo.repo,
-        head_sha: github.context.sha,
-        started_at: startedAt,
-        context: {
-            rustc: rustcVersion,
-            cargo: cargoVersion,
-            clippy: clippyVersion,
-        }
-    });
+//     await runner.executeCheck({
+//         token: actionInput.token,
+//         name: 'clippy',
+//         owner: github.context.repo.owner,
+//         repo: github.context.repo.repo,
+//         head_sha: github.context.sha,
+//         started_at: startedAt,
+//         context: {
+//             rustc: rustcVersion,
+//             cargo: cargoVersion,
+//             clippy: clippyVersion,
+//         }
+//     });
 
     if (clippyExitCode !== 0) {
         throw new Error(`Clippy had exited with the ${clippyExitCode} exit code`);

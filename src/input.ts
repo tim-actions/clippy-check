@@ -23,7 +23,7 @@ export function get(): Input {
     const useCross = input.getInputBool('use-cross');
 
     return {
-        token: input.getInput('token', {required: true}),
+        token: input.getInput('token'),
         args: args,
         useCross: useCross,
         toolchain: toolchain || undefined
