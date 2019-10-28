@@ -107,6 +107,7 @@ export class CheckRunner {
     }
 
     renderAnnotation(annotation: octokit.ChecksCreateParamsOutputAnnotations): void {
+        console.log(annotation);
         switch (annotation.annotation_level) {
             case 'failure':
                 process.stdout.write('::error ');
