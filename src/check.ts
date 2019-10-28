@@ -107,25 +107,23 @@ export class CheckRunner {
     }
 
     renderAnnotation(annotation: octokit.ChecksCreateParamsOutputAnnotations): void {
-        console.log(annotation);
+        let type: 'error' | 'warning' = 'warning';
         switch (annotation.annotation_level) {
             case 'failure':
-                process.stdout.write('::error ');
+                type = 'error';
                 break;
             case 'warning':
-                process.stdout.write('::warning ');
+                type = 'warning';
                 break;
             case 'notice':
-                process.stdout.write('::warning ');
+                type = 'warning';
                 break;
         }
 
-        process.stdout.write(`file=${annotation.path},`);
-        process.stdout.write(`line=${annotation.start_line},`);
-        process.stdout.write(`col=${annotation.start_column}`);
-        process.stdout.write('::');
-        process.stdout.write(annotation.message);
-        process.stdout.write(os.EOL);
+        const message = `::${type} file=${annotation.path},line=${annotation.start_line},col=${annotation.start_column}:: ${annotation.message}`;
+        console.info(message);
+
+        process.stdout.write(message + os.EOL);
 
 //         core.info(`Clippy results: \
 // ${this.stats.ice} ICE, ${this.stats.error} errors, \
