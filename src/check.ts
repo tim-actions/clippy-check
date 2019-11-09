@@ -1,3 +1,5 @@
+import * as os from 'os';
+import * as process from 'process';
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import * as octokit from "@octokit/rest";
@@ -125,12 +127,11 @@ ${this.stats.help} help`);
             // `GITHUB_HEAD_REF` is set only for forked repos,
             // so we could check if it is a fork and not a base repo.
             if (process.env.GITHUB_HEAD_REF) {
-                core.error(`Unable to create clippy annotations! Reason: ${error}`);
-                core.warning("It seems that this Action is executed from the forked repository.");
-                core.warning(`GitHub Actions are not allowed to create Check annotations, \
+                core.warning('Clippy annotations will be trimmed for this PR, see https://github.com/actions-rs/clippy-check/issues/2 for details');
+                core.info("It seems that this Action is executed from the forked repository.");
+                core.info(`GitHub Actions are not allowed to create Check annotations, \
 when executed for a forked repos. \
 See https://github.com/actions-rs/clippy-check/issues/2 for details.`);
-                core.info('Posting clippy checks here instead.');
 
                 this.dumpToStdout();
 
@@ -261,7 +262,21 @@ See https://github.com/actions-rs/clippy-check/issues/2 for details.`);
 
     private dumpToStdout() {
         for (const annotation of this.annotations) {
-            core.info(annotation.message);
+            let type: 'error' | 'warning' = 'warning';
+            switch (annotation.annotation_level) {
+                case 'failure':
+                    type = 'error';
+                    break;
+                case 'warning':
+                    type = 'warning';
+                    break;
+                case 'notice':
+                    type = 'warning';
+                    break;
+            }
+
+            const message = `::${type} file=${annotation.path},line=${annotation.start_line},col=${annotation.start_column}:: ${annotation.message}`;
+            process.stdout.write(message + os.EOL);
         }
     }
 
