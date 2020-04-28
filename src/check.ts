@@ -78,11 +78,6 @@ export class CheckRunner {
             return;
         }
 
-        if (contents.message.code === null) {
-            core.debug('Message code is missing, ignoring it');
-            return;
-        }
-
         switch (contents.message.level) {
             case 'help':
                 this.stats.help += 1;
